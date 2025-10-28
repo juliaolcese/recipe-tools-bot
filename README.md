@@ -1,2 +1,2 @@
-# recipe-helper-bot
+# recipe-tools-bot
 
