@@ -9,14 +9,17 @@ import logging
 
 logger = logging.getLogger(__name__) 
 
-API_KEY = os.getenv("GEMINI_API_KEY")
+API_KEY = os.getenv("GOOGLE_API_KEY")
 
 class Ingredient(BaseModel):    
     name: str = Field(
         description="Ingredient name. E.g., 'sugar', 'flour', 'eggs'."
     )
     quantity: str = Field(
-        description="Quantity of the ingredient with the corresponding measurement unit. E.g., '1 unit', '2 cups', '300g'."
+        description="Quantity of the ingredient. E.g., '1', '2', '300'."
+    )
+    unit: str = Field(
+        description="Measurement unit of the ingredient quantity. E.g., 'cups', 'grams', 'tablespoons', 'units'."
     )
 
 class IngredientList(BaseModel):
@@ -47,8 +50,8 @@ class GeminiAPI():
 
             ingredients_text = response.text    
 
-            # Es necesario hacer dos llamadas a la API porque al usar tools no se 
-            # permite response_schema
+            # It's necessary to make two API calls because using tools doesn't allow response_schema
+            # to be application/json directly.
             structured_response = self.client.models.generate_content(
                 model=self.model,
                 contents=f"Convert this text to JSON using schema IngredientList:\n{ingredients_text}",
