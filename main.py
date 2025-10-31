@@ -9,7 +9,9 @@ from agent import Agent
 load_dotenv()
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
 
-
+# TODO: 
+# * Configurar para que pueda tener memoria de mensajes anteriores
+# * Arreglar para que muestre "typing"
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO

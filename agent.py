@@ -5,13 +5,21 @@ from langchain.tools import tool
 from fractions import Fraction
 import logging
 import unicodedata
+from geminiAPI import GeminiAPI, Ingredient, IngredientList
 
 logger = logging.getLogger(__name__) 
 
 from dotenv import load_dotenv
 load_dotenv()
 
-from geminiAPI import GeminiAPI, Ingredient, IngredientList
+
+# TODO TOOLS:
+# Juntar todos los ingredientes repetidos y sumar las cantidades
+# Juntar todos los ingredientes de distintas recetas y sumar las cantidades
+# Convertir unidades en lista de ingredientes
+# Convertir unidades en el texto de la receta
+# Pensar cómo hacer si tiene varios componentes
+
 ingredients_llm = GeminiAPI()
 @tool
 def get_ingredients(url: str) -> IngredientList:
@@ -25,7 +33,7 @@ def get_ingredients(url: str) -> IngredientList:
         return IngredientList(items=[])
     return IngredientList(items=ingredients_list)
 
-@tool
+# @tool
 def resize_recipe(ingredients: IngredientList, resize_factor: float) -> IngredientList:
     """Resize the quantities of the ingredients by a given factor.
     Args:
@@ -34,13 +42,21 @@ def resize_recipe(ingredients: IngredientList, resize_factor: float) -> Ingredie
     """
     new_ingredients = []
     for ingredient in ingredients.items:
+        as_fraction = False
+        print(f"Resizing ingredient: {ingredient}")
         new_quantity_str = ingredient.quantity 
         try:
             normalized_quantity = unicodedata.normalize('NFKC', ingredient.quantity)
-            quantity_num = float(sum(Fraction(part) for part in normalized_quantity.split()))
+            if '/' in normalized_quantity or '⁄' in normalized_quantity:
+                as_fraction = True
+            parts = normalized_quantity.split()
+            parts = [part.replace('⁄', '/') for part in parts]
+            quantity_num = sum(Fraction(part) for part in parts)
             new_quantity = quantity_num * resize_factor
-            new_quantity_str = str(new_quantity)  
-        
+            if as_fraction:
+                new_quantity_str = str(Fraction(new_quantity).limit_denominator())
+            else:
+                new_quantity_str = str(new_quantity)
         except ValueError:
             logger.warning(f"Unable to convert quantity: '{ingredient.quantity}'")
             new_quantity_str = f"{ingredient.quantity} (x {resize_factor})"
@@ -48,6 +64,9 @@ def resize_recipe(ingredients: IngredientList, resize_factor: float) -> Ingredie
         new_ingredients.append(Ingredient(name=ingredient.name, quantity=new_quantity_str, unit=ingredient.unit))
     
     return IngredientList(items=new_ingredients)
+
+# TODO: Configurar agente para que si devuelve una lista de ingredientes,
+# los formatee como una enumeración de ítems
 class Agent():
     def __init__(self):
         llm = ChatGoogleGenerativeAI(
